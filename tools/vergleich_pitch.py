@@ -7,7 +7,10 @@ from matplotlib.patches import Rectangle
 
 DY = {"index": 8.8, "middle": 0.0, "ring": -1.1, "pinky": 8.8}
 ROW = 18.0
-GAP = 96.0
+# 120 mm statt der gemessenen 84-92: der Pico-Sockel (23.1 mm breit) sitzt
+# zwischen den Asterisk-Spalten und braucht 2x9.125 mm Dioden-Offset plus
+# Luft -> 42.1 mm Asterisk-Abstand. Bei GAP 96 ist das nicht darstellbar.
+GAP = 120.0
 SW = 15.0
 
 VARIANTS = [

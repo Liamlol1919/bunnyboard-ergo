@@ -220,6 +220,17 @@ def main() -> None:
                                           pcbnew.FromMM(DY_MIDDLE)))
             f.SetOrientationDegrees(0.0)
             moved += 1
+        elif ref == "G***":
+            # Bunnyboards Kupfer-Logo (Wert "LOGO") auf F.Cu. Es gehoert zur
+            # Board-Grafik und muss mit dem Layout mitwandern, sonst liegt es
+            # nach dem Umzug ausserhalb von Edge.Cuts (Quelle: 140.69/119.17,
+            # Ziel-Umriss endet bei y=64.7).
+            # Platz: freie Bank-Flaeche oberhalb der Tasten (y -39.1..-19.1,
+            # 253 mm breit). Rechts aussen, 12.1 x 14.6 mm gross.
+            f.SetPosition(pcbnew.VECTOR2I(pcbnew.FromMM(104.0),
+                                          pcbnew.FromMM(-30.0)))
+            f.SetOrientationDegrees(0.0)
+            moved += 1
 
     # Dioden folgen ihrem Switch. Regel im Quellboard gemessen (alle 28 Paare
     # ohne Ausnahme): Dn liegt bei Sn + (+9.125, +3.750), Rotation 90 Grad.
