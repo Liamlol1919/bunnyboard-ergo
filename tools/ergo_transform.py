@@ -66,6 +66,14 @@ THUMB_EXTRA_DY = 55.0  # Extra X1/X2, aussen-unten
 SPLAY_DEG = 0.0        # Handachse laut Messung -1.6/-3.5 Grad -> rund 0
 ROW_PITCH = 18.0       # Bunnyboard-Reihenabstand, unveraendert (Choc 18x17)
 
+# Kappenrand. Choc-1u-Kappe ist 17.5 mm breit, der Pitch 19 -> 7.5 mm von
+# der Tastenmitte bis zum Kappenrand (Kappenmitte = Tastenmitte).
+CAP_HALF = 7.5
+# Freiraum vom Kappenrand bis zur Boardkante. Bunnys Original hatte 12.5;
+# 4 mm genuegen fuer ein Board, das flach aufliegt (JLCPCB verlangt nur
+# 0.2 mm Kupfer-Kante-Abstand).
+EDGE_MARGIN = 4.0
+
 # Referenz: Bunnyboard-Spalten x und Reihen y (gemessen, siehe README).
 SRC_COL_X_LEFT = [35.0775, 54.0775, 73.0775, 92.0775, 111.0775]
 SRC_COL_X_RIGHT = [168.0775, 187.0775, 206.0775, 225.0775, 244.0775]
@@ -194,7 +202,7 @@ def main() -> None:
     targets = target_positions()
     mid_l = -GAP / 2.0
     mid_r = +GAP / 2.0
-    moved, missing = 0, []
+    moved, missing, removed_logo = 0, [], 0
     for f in board.GetFootprints():
         ref = f.GetReference()
         if ref.startswith("S") and ref[1:].isdigit():
@@ -226,17 +234,9 @@ def main() -> None:
                                           pcbnew.FromMM(DY_MIDDLE)))
             f.SetOrientationDegrees(0.0)
             moved += 1
-        elif ref == "G***":
-            # Bunnyboards Kupfer-Logo (Wert "LOGO") auf F.Cu. Es gehoert zur
-            # Board-Grafik und muss mit dem Layout mitwandern, sonst liegt es
-            # nach dem Umzug ausserhalb von Edge.Cuts (Quelle: 140.69/119.17,
-            # Ziel-Umriss endet bei y=64.7).
-            # Platz: freie Bank-Flaeche oberhalb der Tasten (y -39.1..-19.1,
-            # 253 mm breit). Rechts aussen, 12.1 x 14.6 mm gross.
-            f.SetPosition(pcbnew.VECTOR2I(pcbnew.FromMM(104.0),
-                                          pcbnew.FromMM(-30.0)))
-            f.SetOrientationDegrees(0.0)
-            moved += 1
+    # Kupfer-Logo G*** (Wert "LOGO") wird ENTFERNT, nicht verschoben: es ist
+    # Dekoration und kostet nur Flaeche. Entfernt wird es weiter oben, vor
+    # der Positionsschleife (SWIG-Handle).
 
     # Dioden folgen ihrem Switch. Regel im Quellboard gemessen (alle 28 Paare
     # ohne Ausnahme): Dn liegt bei Sn + (+9.125, +3.750), Rotation 90 Grad.
@@ -262,16 +262,18 @@ def main() -> None:
 
     # Board-Umriss neu aufbauen. Der Original-Umriss ist eine T-Form
     # (Bank + Zunge) im Quellkoordinatensystem. Nach dem Verschieben deckt
-    # er die Tasten nicht mehr richtig ab (Zunge zu kurz, Raender 31 mm
-    # statt 12.5). Deshalb wird er aus den tatsaechlichen Tastenpositionen
-    # neu gerechnet: 7.5 mm halbe Kappe + 12.5 mm Rand (Bunnyboard-Mass).
+    # er die Tasten nicht mehr richtig ab (Zunge zu kurz, Raender 31 mm).
+    # Neu aus den tatsaechlichen Positionen: 7.5 mm halbe Kappe + 4.0 mm
+    # Rand = 11.5. Bunnys Original hatte 12.5 mm Rand (M=20); 4 mm ist fuer
+    # ein Handgelenk-aufgelegtes Board reichlich (JLCPCB fordert 0.2 mm
+    # Kupferabstand zur Kante) und spart rund 13 mm Breite + 15 mm Hoehe.
     swxy = [f.GetPosition() for f in board.GetFootprints()
             if f.GetReference().startswith("S")
             and f.GetReference()[1:].isdigit()]
     # Bank = alles oberhalb y=30, Zunge = Daumenreihe darunter.
     bank = [p for p in swxy if p.y / 1e6 < 30.0]
     tongue = [p for p in swxy if p.y / 1e6 >= 30.0]
-    M = 20.0          # 7.5 halbe Kappe + 12.5 Rand
+    M = CAP_HALF + EDGE_MARGIN
     F = 3.375         # Fase, wie im Original
     bx0 = min(p.x / 1e6 for p in bank) - M
     bx1 = max(p.x / 1e6 for p in bank) + M
@@ -280,6 +282,15 @@ def main() -> None:
     zx0 = min(p.x / 1e6 for p in tongue) - M
     zx1 = max(p.x / 1e6 for p in tongue) + M
     zy1 = max(p.y / 1e6 for p in tongue) + M
+    # Der Pico ragt ueber die Bankoberkante hinaus (54 mm hoch gegen 38 mm
+    # Bank). Ohne diese Korrektur liegt er nach dem Verkleinern teilweise
+    # ausserhalb von Edge.Cuts - DRC "item outside board".
+    mcu = next((f for f in board.GetFootprints() if f.GetReference() == "U2"),
+               None)
+    if mcu is not None:
+        mb = mcu.GetBoundingBox(False, False)
+        by0 = min(by0, pcbnew.ToMM(mb.GetTop()) - EDGE_MARGIN)
+        by1 = max(by1, pcbnew.ToMM(mb.GetBottom()) + EDGE_MARGIN)
     poly = [
         (bx0 + F, by0), (bx1 - F, by0), (bx1, by0 + F),
         (bx1, by1 - F), (bx1 - F, by1),
@@ -308,6 +319,17 @@ def main() -> None:
     print(f"umriss neu: {len(poly)} Punkte, "
           f"{bx1-bx0:.1f} x {zy1-by0:.1f} mm")
 
+    # Logo entfernen, BEVOR die Tracks geloescht werden. Beide Remove()-
+    # Aufrufe invalidieren den SWIG-Footprint-Handle fuer alle danach
+    # geholten Objekte ("no attribute 'GetReference'"). Reihenfolge daher:
+    # erst Logo (eigener, abgeschlossener Footprint-Durchlauf), dann Tracks.
+    # Ein zweiter Footprint-Durchlauf nach dem Logo-Remove ist erlaubt, weil
+    # Remove() auf Footprints die neu geholte Liste nicht beschaedigt.
+    for f in list(board.GetFootprints()):
+        if f.GetReference() == "G***":
+            board.Remove(f)
+            removed_logo += 1
+
     # Alte Leiterbahnen entfernen. Sie verbinden die ALTEN Pad-Positionen;
     # nach dem Verschieben wuerden sie kreuz und quer ueber das neue Layout
     # laufen und Kurzschluesse erzeugen. Das Board muss nach der
@@ -318,6 +340,7 @@ def main() -> None:
     for t in list(board.GetTracks()):
         board.Remove(t)
     print(f"tracks entfernt: {tracks_before} (muessen neu geroutet werden)")
+    print(f"logo entfernt: {removed_logo}")
 
 
     pcbnew.SaveBoard(args.dst, board)
@@ -348,6 +371,8 @@ def main() -> None:
         after = {k: tuple(v) for k, v in
                  json.loads(r.stdout.strip().splitlines()[-1]).items()}
         before_t = {k: tuple(v) for k, v in before.items()}
+        # Das entfernte Logo ist absichtlich weg (Dekoration, kostet Flaeche).
+        before_t.pop("G***", None)
         changed = [k for k in before_t if before_t[k] != after.get(k)]
         print(f"Netz-Snapshot: {len(before)} Footprints, "
               f"{len(changed)} mit abweichender Pad-Zahl")

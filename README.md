@@ -29,10 +29,19 @@ which additionally need 2 x 9.125 mm for their diode offsets plus clearance
 apart and the Pico overlapped S6/S17.
 
 ### outline
-`Edge.Cuts` is rebuilt as a T shape from the actual key extents (12.5 mm
-margin), not from the raw bounding box of the source board. The old outline
-was 234 x 171 mm with ~65% empty FR4 south of the keys; the new one is
-253.6 x 103.9 mm and fits a laptop keyboard well (MacBook Pro 14: ~280 x 105 mm).
+`Edge.Cuts` is rebuilt as a T shape from the actual key extents, not from the
+raw bounding box of the source board. Margin is 4 mm from the keycap edge
+(previously 12.5 mm as in bunnys original): a board that lies flat does not
+need more, and JLCPCB only requires 0.2 mm copper-to-edge - the smallest
+actual copper-to-edge distance here is 1.62 mm.
+
+The copper logo (`G***`) was removed: it is decoration and cost board area.
+
+| | before | after |
+|---|---|---|
+| Board | 253.6 x 114.2 mm | **236.6 x 97.2 mm** |
+| Margin (cap edge to board edge) | 10.5-12.5 mm | 4.0 mm |
+| Copper to edge (min) | - | 1.62 mm |
 
 ## specs and other stuff
 - powered by a Raspberry Pi Pico
