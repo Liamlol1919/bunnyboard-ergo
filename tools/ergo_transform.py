@@ -57,9 +57,11 @@ DY_RING = -1.1         # gemessen
 DY_PINKY = 8.8         # gemessen
 
 # Daumen-Cluster. Ruhepunkt Daumen liegt laut Messung 44.7 mm unter dem
-# Mittelfinger-Home; die innere Taste 4 mm hoeher (41.0).
-THUMB_IN_DY = 41.0
-THUMB_OUT_DY = 44.7
+# Mittelfinger-Home; die innere Taste 4 mm hoeher (41.0). Die Extrataste
+# X1/X2 sitzt aussen-unten (STAGGER.md: dx -30, dy +55).
+THUMB_REST_DY = 44.7   # Taste 1 (A/E), Ruhepunkt
+THUMB_IN_DY = 41.0     # Taste 2 (O/U), 19 mm innen und 4 mm hoeher
+THUMB_EXTRA_DY = 55.0  # Extra X1/X2, aussen-unten
 
 SPLAY_DEG = 0.0        # Handachse laut Messung -1.6/-3.5 Grad -> rund 0
 ROW_PITCH = 18.0       # Bunnyboard-Reihenabstand, unveraendert (Choc 18x17)
@@ -148,15 +150,19 @@ def target_positions() -> dict[str, tuple[float, float, float]]:
 
     # Daumenreihe, an den Mittelfingerspalten verankert. Quell-x der Daumen
     # deckt sich mit der Mittelfingerspalte (73.08 links, 206.08 rechts).
-    # Je Hand drei Tasten: innen (+19), Mitte (0), aussen (-19) relativ zur
-    # Mittelfingerspalte; die aeusseren sitzen 3.7 mm tiefer.
-    ty0, ty1 = THUMB_IN_DY, THUMB_OUT_DY
-    out["S23"] = (mid_l + DX_MIDDLE, ty0, 0.0)
-    out["S24"] = (mid_l + DX_MIDDLE + 19.0, ty0, 0.0)
-    out["S25"] = (mid_l + DX_MIDDLE + 38.0, ty1, 0.0)
-    out["S26"] = (mid_r + DX_MIDDLE - 38.0, ty1, 0.0)
-    out["S27"] = (mid_r + DX_MIDDLE - 19.0, ty0, 0.0)
-    out["S28"] = (mid_r + DX_MIDDLE, ty0, 0.0)
+    # Je Hand drei Tasten, relativ zur Mittelfingerspalte:
+    #   Taste 1 (A/E, Ruhepunkt)  dx 0     dy +45.0
+    #   Taste 2 (O/U)             dx +/-19 dy +41.0   (19 mm innen, 4 hoch)
+    #   Extra (X1/X2)             dx +/-38 dy +55.0   (aussen-unten)
+    # Quelle: measure/STAGGER.md, Abschnitt "Daumen-Cluster".
+    # Vorher waren S23/S25 bzw. S28/S26 vertauscht: S23 stand auf 41 statt 45,
+    # S25 auf 44.7 statt 55 - die Stufe sass an der falschen Taste.
+    out["S23"] = (mid_l + DX_MIDDLE, THUMB_REST_DY, 0.0)
+    out["S24"] = (mid_l + DX_MIDDLE + 19.0, THUMB_IN_DY, 0.0)
+    out["S25"] = (mid_l + DX_MIDDLE + 38.0, THUMB_EXTRA_DY, 0.0)
+    out["S26"] = (mid_r + DX_MIDDLE - 38.0, THUMB_EXTRA_DY, 0.0)
+    out["S27"] = (mid_r + DX_MIDDLE - 19.0, THUMB_IN_DY, 0.0)
+    out["S28"] = (mid_r + DX_MIDDLE, THUMB_REST_DY, 0.0)
     return out
 
 
