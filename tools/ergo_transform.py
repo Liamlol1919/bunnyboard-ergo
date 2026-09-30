@@ -75,7 +75,7 @@ THUMB_EXTRA_DY = 55.0  # Extra X1/X2, aussen-unten
 # DRC sieht das nicht (prueft Kupfer, nicht Kappen), es faellt erst beim
 # Zusammenbau auf. Bei 6 Grad bleiben 0.13 mm Luft; die realen Kappen sind
 # ab Werk ca. 0.5 mm schmaler als das nominale Mass, damit ~0.6 mm.
-THUMB_ROT = 9.0
+THUMB_ROT = 3.0
 
 SPLAY_DEG = 0.0        # Handachse laut Messung -1.6/-3.5 Grad -> rund 0
 ROW_PITCH = 18.0       # Bunnyboard-Reihenabstand, unveraendert (Choc 18x17)
