@@ -187,12 +187,12 @@ def target_positions() -> dict[str, tuple[float, float, float]]:
     # entspricht der Grip-Haltung). Eine 15-mm-Kappe waechst bei 12 Grad auf
     # 17.8 mm - der Pitch ist 19 mm, es bleibt also Luft.
     # Links negativ, rechts positiv (gespiegelt).
-    out["S23"] = (mid_l + DX_MIDDLE, THUMB_REST_DY, -THUMB_ROT)
-    out["S24"] = (mid_l + DX_MIDDLE + 19.0, THUMB_IN_DY, -THUMB_ROT)
-    out["S25"] = (mid_l + DX_MIDDLE + 38.0, THUMB_EXTRA_DY, -THUMB_ROT)
-    out["S26"] = (mid_r + DX_MIDDLE - 38.0, THUMB_EXTRA_DY, +THUMB_ROT)
-    out["S27"] = (mid_r + DX_MIDDLE - 19.0, THUMB_IN_DY, +THUMB_ROT)
-    out["S28"] = (mid_r + DX_MIDDLE, THUMB_REST_DY, +THUMB_ROT)
+    out["S23"] = (mid_l + DX_MIDDLE, THUMB_REST_DY, +THUMB_ROT)
+    out["S24"] = (mid_l + DX_MIDDLE + 19.0, THUMB_IN_DY, +THUMB_ROT)
+    out["S25"] = (mid_l + DX_MIDDLE + 38.0, THUMB_EXTRA_DY, +THUMB_ROT)
+    out["S26"] = (mid_r + DX_MIDDLE - 38.0, THUMB_EXTRA_DY, -THUMB_ROT)
+    out["S27"] = (mid_r + DX_MIDDLE - 19.0, THUMB_IN_DY, -THUMB_ROT)
+    out["S28"] = (mid_r + DX_MIDDLE, THUMB_REST_DY, -THUMB_ROT)
     return out
 
 
@@ -285,8 +285,19 @@ def main() -> None:
         #    gespiegelt. Sie lag mit +10.56 nur 9.96 mm von S24 entfernt
         #    und kollidierte mit dessen NPTH-Loch (0.04 mm Rand). Nach
         #    aussen hat S23 als Randtaste 20 mm Platz.
-        if sw == "S23":
-            ox = -10.0
+        # Die Daumentasten bekommen feste Offsets, weil im Cluster die
+        # Nachbarn sonst kollidieren. Reihenfolge jeweils von aussen nach
+        # innen, Diode zeigt zur Cluster-Mitte hin (dort ist Platz):
+        #   links  S23(-60) -> 8.0, S24(-41) -> 10.0, S25(-22) -> 10.0
+        #   rechts S28( 60) -> -8.0, S27(41) -> -10.0, S26(22) -> -10.0
+        # Ohne die expliziten Werte landete D27 bei +10 auf x=51 und D28
+        # bei -8 auf x=52 - 1 mm Abstand, DRC courtyards_overlap.
+        THUMB_DIODE_OX = {
+            "S23": 8.0, "S24": 10.0, "S25": 10.0,
+            "S26": -10.0, "S27": -10.0, "S28": -8.0,
+        }
+        if sw in THUMB_DIODE_OX:
+            ox = THUMB_DIODE_OX[sw]
         elif rot == 0.0:
             ox = 9.125
         else:

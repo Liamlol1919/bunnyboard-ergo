@@ -30,7 +30,11 @@ apart and the Pico overlapped S6/S17.
 
 ### thumb rotation: 3 degrees
 The 3 thumb keys per hand are rotated so they face the thumb instead of
-standing axis-parallel. The angle is limited by the caps, not by taste:
+standing axis-parallel. Left hand +3, right hand -3.
+NOTE: the Choc footprint is NOT mirror-symmetric - all six thumb switches
+have the same pad axis (22.78 deg) in the source board. The sign therefore
+cannot be derived from "mirror the left hand"; it is set per hand and must
+be verified visually on the render. The angle is limited by the caps, not by taste:
 a Choc-1u cap is 17.5 x 16.5 mm (the 15 mm used in the first calculation was
 too optimistic), and rotating a cap by a widens its bounding box to
 17.5*(cos a + sin a). S23 and S24 are 19.36 mm apart:
