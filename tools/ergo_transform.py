@@ -62,20 +62,20 @@ DY_PINKY = 8.8         # gemessen
 THUMB_REST_DY = 44.7   # Taste 1 (A/E), Ruhepunkt
 THUMB_IN_DY = 41.0     # Taste 2 (O/U), 19 mm innen und 4 mm hoeher
 THUMB_EXTRA_DY = 55.0  # Extra X1/X2, aussen-unten
-# Drehung der Daumentasten zum Daumen hin.
+# Drehung der Daumentasten zum Daumen hin (nach innen gekippt).
 #
-# Grenze ist NICHT der Geschmack, sondern die Kappenbreite: eine Choc-1u-Kappe
-# ist 17.5 x 16.5 mm (nicht 15 - das war die zu optimistische Annahme der
-# ersten Rechnung). S23 und S24 liegen 19.36 mm auseinander. Eine um a Grad
-# gedrehte Kappe hat eine BBox-Breite von 17.5*(cos a + sin a):
+# Grenze ist die Kappenbreite: eine Choc-1u-Kappe ist 17.5 x 16.5 mm
+# (nicht 15 - das war die zu optimistische Annahme der ersten Rechnung).
+# S23 und S24 liegen 19.36 mm auseinander. Eine um a Grad gedrehte Kappe hat
+# eine BBox-Breite von 17.5*(cos a + sin a):
 #     0 Grad -> 17.50  Luecke 1.86 mm
 #     3 Grad -> 18.42  Luecke 0.94 mm
-#     6 Grad -> 19.23  Luecke 0.13 mm
-#    12 Grad -> 20.76  Ueberlappung 1.40 mm  <- Kappen stossen sich
+#     6 Grad -> 19.23  Luecke 0.13 mm   <- gewaehlt
+#     8 Grad -> 19.77  Ueberlappung     <- Kappen stossen sich
 # DRC sieht das nicht (prueft Kupfer, nicht Kappen), es faellt erst beim
-# Zusammenbau auf. Bei 3 Grad bleiben 0.94 mm - wenig, aber die Kappen sind
-# ab Werk ca. 0.5 mm schmaler als das nominale Mass.
-THUMB_ROT = 3.0
+# Zusammenbau auf. Bei 6 Grad bleiben 0.13 mm Luft; die realen Kappen sind
+# ab Werk ca. 0.5 mm schmaler als das nominale Mass, damit ~0.6 mm.
+THUMB_ROT = 6.0
 
 SPLAY_DEG = 0.0        # Handachse laut Messung -1.6/-3.5 Grad -> rund 0
 ROW_PITCH = 18.0       # Bunnyboard-Reihenabstand, unveraendert (Choc 18x17)
