@@ -28,6 +28,29 @@ which additionally need 2 x 9.125 mm for their diode offsets plus clearance
 -> 42.1 mm between the asterisk caps. At 96 mm the asterisks were only 28 mm
 apart and the Pico overlapped S6/S17.
 
+### thumb rotation: 3 degrees
+The 3 thumb keys per hand are rotated so they face the thumb instead of
+standing axis-parallel. The angle is limited by the caps, not by taste:
+a Choc-1u cap is 17.5 x 16.5 mm (the 15 mm used in the first calculation was
+too optimistic), and rotating a cap by a widens its bounding box to
+17.5*(cos a + sin a). S23 and S24 are 19.36 mm apart:
+
+| angle | cap bbox | gap S23-S24 |
+|---|---|---|
+| 0 | 17.50 mm | +1.86 mm |
+| **3 (chosen)** | 18.39 mm | **+0.97 mm** |
+| 6 | 19.23 mm | +0.13 mm |
+| 12 | 20.76 mm | -1.40 mm overlap |
+
+DRC does not catch cap collisions - it only checks copper. At 12 degrees the
+two caps physically touch, which only shows up during assembly.
+
+### chamfer: outer corners only
+The T-outline transition from the bank to the tongue is a concave corner.
+A chamfer there cuts away material the corner needs. Fase is applied only to
+the convex corners: the 4 bank corners and the 2 tongue ends.
+
+
 ### outline
 `Edge.Cuts` is rebuilt as a T shape from the actual key extents, not from the
 raw bounding box of the source board. Margin is 4 mm from the keycap edge

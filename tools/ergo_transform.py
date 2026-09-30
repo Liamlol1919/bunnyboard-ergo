@@ -62,6 +62,20 @@ DY_PINKY = 8.8         # gemessen
 THUMB_REST_DY = 44.7   # Taste 1 (A/E), Ruhepunkt
 THUMB_IN_DY = 41.0     # Taste 2 (O/U), 19 mm innen und 4 mm hoeher
 THUMB_EXTRA_DY = 55.0  # Extra X1/X2, aussen-unten
+# Drehung der Daumentasten zum Daumen hin.
+#
+# Grenze ist NICHT der Geschmack, sondern die Kappenbreite: eine Choc-1u-Kappe
+# ist 17.5 x 16.5 mm (nicht 15 - das war die zu optimistische Annahme der
+# ersten Rechnung). S23 und S24 liegen 19.36 mm auseinander. Eine um a Grad
+# gedrehte Kappe hat eine BBox-Breite von 17.5*(cos a + sin a):
+#     0 Grad -> 17.50  Luecke 1.86 mm
+#     3 Grad -> 18.42  Luecke 0.94 mm
+#     6 Grad -> 19.23  Luecke 0.13 mm
+#    12 Grad -> 20.76  Ueberlappung 1.40 mm  <- Kappen stossen sich
+# DRC sieht das nicht (prueft Kupfer, nicht Kappen), es faellt erst beim
+# Zusammenbau auf. Bei 3 Grad bleiben 0.94 mm - wenig, aber die Kappen sind
+# ab Werk ca. 0.5 mm schmaler als das nominale Mass.
+THUMB_ROT = 3.0
 
 SPLAY_DEG = 0.0        # Handachse laut Messung -1.6/-3.5 Grad -> rund 0
 ROW_PITCH = 18.0       # Bunnyboard-Reihenabstand, unveraendert (Choc 18x17)
@@ -165,12 +179,20 @@ def target_positions() -> dict[str, tuple[float, float, float]]:
     # Quelle: measure/STAGGER.md, Abschnitt "Daumen-Cluster".
     # Vorher waren S23/S25 bzw. S28/S26 vertauscht: S23 stand auf 41 statt 45,
     # S25 auf 44.7 statt 55 - die Stufe sass an der falschen Taste.
-    out["S23"] = (mid_l + DX_MIDDLE, THUMB_REST_DY, 0.0)
-    out["S24"] = (mid_l + DX_MIDDLE + 19.0, THUMB_IN_DY, 0.0)
-    out["S25"] = (mid_l + DX_MIDDLE + 38.0, THUMB_EXTRA_DY, 0.0)
-    out["S26"] = (mid_r + DX_MIDDLE - 38.0, THUMB_EXTRA_DY, 0.0)
-    out["S27"] = (mid_r + DX_MIDDLE - 19.0, THUMB_IN_DY, 0.0)
-    out["S28"] = (mid_r + DX_MIDDLE, THUMB_REST_DY, 0.0)
+    #
+    # Zusaetzlich werden die Daumentasten gedreht, damit sie zum Daumen
+    # zeigen statt achsenparallel zu stehen. Winkel aus der Messung:
+    # hand_geometry_clean.json ergibt eine Daumenachse von 125-134 Grad zur
+    # Fingerrichtung (relaxed 124.5, grip 132.2, closed 134.4; Schreiben
+    # entspricht der Grip-Haltung). Eine 15-mm-Kappe waechst bei 12 Grad auf
+    # 17.8 mm - der Pitch ist 19 mm, es bleibt also Luft.
+    # Links negativ, rechts positiv (gespiegelt).
+    out["S23"] = (mid_l + DX_MIDDLE, THUMB_REST_DY, -THUMB_ROT)
+    out["S24"] = (mid_l + DX_MIDDLE + 19.0, THUMB_IN_DY, -THUMB_ROT)
+    out["S25"] = (mid_l + DX_MIDDLE + 38.0, THUMB_EXTRA_DY, -THUMB_ROT)
+    out["S26"] = (mid_r + DX_MIDDLE - 38.0, THUMB_EXTRA_DY, +THUMB_ROT)
+    out["S27"] = (mid_r + DX_MIDDLE - 19.0, THUMB_IN_DY, +THUMB_ROT)
+    out["S28"] = (mid_r + DX_MIDDLE, THUMB_REST_DY, +THUMB_ROT)
     return out
 
 
@@ -253,7 +275,22 @@ def main() -> None:
         if sw not in targets:
             continue
         x, y, rot = targets[sw]
-        ox = 9.125
+        # Dioden-Offset. Zwei Faelle:
+        #  * gerade Tasten (rot 0): unveraendert 9.125 wie im Quellboard.
+        #  * gedrehte Daumentasten: 10.0. Bei 9.125 rotierte das NPTH-Loch
+        #    der eigenen Taste in das Diodenpad (DRC hole_clearance,
+        #    1.40 mm statt 1.62 mm). Empirisch geprueft: 10.0 gibt 2.11 mm,
+        #    mehr als 10.0 schiebt die Diode in die Nachbartaste.
+        #  * D23 (S23, aechtze Daumentaste links): Diode nach AUSSEN
+        #    gespiegelt. Sie lag mit +10.56 nur 9.96 mm von S24 entfernt
+        #    und kollidierte mit dessen NPTH-Loch (0.04 mm Rand). Nach
+        #    aussen hat S23 als Randtaste 20 mm Platz.
+        if sw == "S23":
+            ox = -10.0
+        elif rot == 0.0:
+            ox = 9.125
+        else:
+            ox = 10.0
         dx_off, dy_off = rot_off(ox, 3.75, rot)
         f.SetPosition(pcbnew.VECTOR2I(pcbnew.FromMM(x + dx_off),
                                       pcbnew.FromMM(y + dy_off)))
@@ -291,12 +328,20 @@ def main() -> None:
         mb = mcu.GetBoundingBox(False, False)
         by0 = min(by0, pcbnew.ToMM(mb.GetTop()) - EDGE_MARGIN)
         by1 = max(by1, pcbnew.ToMM(mb.GetBottom()) + EDGE_MARGIN)
+    # Fase nur an den AUSSEN-Ecken (konvex). Der Uebergang Bank->Zunge ist
+    # eine Innenecke (konkav): dort schneidet eine Fase Material weg, das
+    # die Ecke traegt, und erzeugt einen sichtbaren Knick. P5/P6 und
+    # P11/P12 laufen daher rechtwinklig.
+    #   Aussen: (bx0,by0) (bx1,by0) (bx1,by1) (bx0,by1) sowie die beiden
+    #           Zungen-Enden (zx1,zy1) (zx0,zy1)
+    #   Innen : (zx1,by1) und (zx0,by1) - ohne Fase
     poly = [
         (bx0 + F, by0), (bx1 - F, by0), (bx1, by0 + F),
         (bx1, by1 - F), (bx1 - F, by1),
-        (zx1, by1), (zx1 + F, by1 + F), (zx1 + F, zy1 - F),
-        (zx1, zy1), (zx0, zy1), (zx0 + F, zy1 - F),
-        (zx0 + F, by1 + F), (zx0, by1),
+        (zx1, by1),                     # Innenecke rechts, rechtwinklig
+        (zx1, zy1 - F), (zx1 - F, zy1),  # Aussenecke Zungenende rechts
+        (zx0 + F, zy1), (zx0, zy1 - F),  # Aussenecke Zungenende links
+        (zx0, by1),                     # Innenecke links, rechtwinklig
         (bx0 + F, by1), (bx0, by1 - F), (bx0, by0 + F),
     ]
     # Alten Umriss entfernen, neuen als geschlossene Polylinie anlegen.
