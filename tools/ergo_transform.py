@@ -187,14 +187,18 @@ def target_positions() -> dict[str, tuple[float, float, float]]:
     # gemessene Daumenachse (die waere 125-134 Grad zur Fingerrichtung, also
     # viel mehr): Choc-1u ist 17.5 x 16.5 mm, S23 und S24 liegen 19.36 mm
     # auseinander -> siehe THUMB_ROT oben.
-    # Vorzeichen: links +THUMB_ROT, rechts -THUMB_ROT (Variante A). Das ist die
-    # am PCB bestaetigte Richtung; der Tausch auf B war falsch.
-    out["S23"] = (mid_l + DX_MIDDLE, THUMB_REST_DY, +THUMB_ROT)
-    out["S24"] = (mid_l + DX_MIDDLE + 19.0, THUMB_IN_DY, +THUMB_ROT)
-    out["S25"] = (mid_l + DX_MIDDLE + 38.0, THUMB_EXTRA_DY, +THUMB_ROT)
-    out["S26"] = (mid_r + DX_MIDDLE - 38.0, THUMB_EXTRA_DY, -THUMB_ROT)
-    out["S27"] = (mid_r + DX_MIDDLE - 19.0, THUMB_IN_DY, -THUMB_ROT)
-    out["S28"] = (mid_r + DX_MIDDLE, THUMB_REST_DY, -THUMB_ROT)
+    # Vorzeichen: links und rechts MUESSEN entgegengesetzt drehen, damit beide
+    # Kappen zum jeweiligen Daumen kippen. Der Daumen liegt AUSSEN (x = +-82),
+    # die Tasten bei 22..60.
+    # Achtung: rot wirkt INVERTIERT auf die Pad-Achse (rot +3 -> Achse sinkt
+    # von 22.78 auf 19.78), und der 3D-Render zeigt y nach oben, also die
+    # Achse nochmal gespiegelt. Deshalb hier links -THUMB_ROT, rechts +THUMB_ROT.
+    out["S23"] = (mid_l + DX_MIDDLE, THUMB_REST_DY, -THUMB_ROT)
+    out["S24"] = (mid_l + DX_MIDDLE + 19.0, THUMB_IN_DY, -THUMB_ROT)
+    out["S25"] = (mid_l + DX_MIDDLE + 38.0, THUMB_EXTRA_DY, -THUMB_ROT)
+    out["S26"] = (mid_r + DX_MIDDLE - 38.0, THUMB_EXTRA_DY, +THUMB_ROT)
+    out["S27"] = (mid_r + DX_MIDDLE - 19.0, THUMB_IN_DY, +THUMB_ROT)
+    out["S28"] = (mid_r + DX_MIDDLE, THUMB_REST_DY, +THUMB_ROT)
     return out
 
 
