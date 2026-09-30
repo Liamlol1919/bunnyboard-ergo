@@ -187,12 +187,12 @@ def target_positions() -> dict[str, tuple[float, float, float]]:
     # entspricht der Grip-Haltung). Eine 15-mm-Kappe waechst bei 12 Grad auf
     # 17.8 mm - der Pitch ist 19 mm, es bleibt also Luft.
     # Links negativ, rechts positiv (gespiegelt).
-    out["S23"] = (mid_l + DX_MIDDLE, THUMB_REST_DY, +THUMB_ROT)
-    out["S24"] = (mid_l + DX_MIDDLE + 19.0, THUMB_IN_DY, +THUMB_ROT)
-    out["S25"] = (mid_l + DX_MIDDLE + 38.0, THUMB_EXTRA_DY, +THUMB_ROT)
-    out["S26"] = (mid_r + DX_MIDDLE - 38.0, THUMB_EXTRA_DY, -THUMB_ROT)
-    out["S27"] = (mid_r + DX_MIDDLE - 19.0, THUMB_IN_DY, -THUMB_ROT)
-    out["S28"] = (mid_r + DX_MIDDLE, THUMB_REST_DY, -THUMB_ROT)
+    out["S23"] = (mid_l + DX_MIDDLE, THUMB_REST_DY, -THUMB_ROT)
+    out["S24"] = (mid_l + DX_MIDDLE + 19.0, THUMB_IN_DY, -THUMB_ROT)
+    out["S25"] = (mid_l + DX_MIDDLE + 38.0, THUMB_EXTRA_DY, -THUMB_ROT)
+    out["S26"] = (mid_r + DX_MIDDLE - 38.0, THUMB_EXTRA_DY, +THUMB_ROT)
+    out["S27"] = (mid_r + DX_MIDDLE - 19.0, THUMB_IN_DY, +THUMB_ROT)
+    out["S28"] = (mid_r + DX_MIDDLE, THUMB_REST_DY, +THUMB_ROT)
     return out
 
 
