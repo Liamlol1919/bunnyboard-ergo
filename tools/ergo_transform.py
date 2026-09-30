@@ -75,7 +75,7 @@ THUMB_EXTRA_DY = 55.0  # Extra X1/X2, aussen-unten
 # DRC sieht das nicht (prueft Kupfer, nicht Kappen), es faellt erst beim
 # Zusammenbau auf. Bei 6 Grad bleiben 0.13 mm Luft; die realen Kappen sind
 # ab Werk ca. 0.5 mm schmaler als das nominale Mass, damit ~0.6 mm.
-THUMB_ROT = 6.0
+THUMB_ROT = 9.0
 
 SPLAY_DEG = 0.0        # Handachse laut Messung -1.6/-3.5 Grad -> rund 0
 ROW_PITCH = 18.0       # Bunnyboard-Reihenabstand, unveraendert (Choc 18x17)
@@ -187,18 +187,21 @@ def target_positions() -> dict[str, tuple[float, float, float]]:
     # gemessene Daumenachse (die waere 125-134 Grad zur Fingerrichtung, also
     # viel mehr): Choc-1u ist 17.5 x 16.5 mm, S23 und S24 liegen 19.36 mm
     # auseinander -> siehe THUMB_ROT oben.
-    # Vorzeichen: links und rechts MUESSEN entgegengesetzt drehen, damit beide
-    # Kappen zum jeweiligen Daumen kippen. Der Daumen liegt AUSSEN (x = +-82),
-    # die Tasten bei 22..60.
-    # Achtung: rot wirkt INVERTIERT auf die Pad-Achse (rot +3 -> Achse sinkt
-    # von 22.78 auf 19.78), und der 3D-Render zeigt y nach oben, also die
-    # Achse nochmal gespiegelt. Deshalb hier links -THUMB_ROT, rechts +THUMB_ROT.
-    out["S23"] = (mid_l + DX_MIDDLE, THUMB_REST_DY, -THUMB_ROT)
-    out["S24"] = (mid_l + DX_MIDDLE + 19.0, THUMB_IN_DY, -THUMB_ROT)
-    out["S25"] = (mid_l + DX_MIDDLE + 38.0, THUMB_EXTRA_DY, -THUMB_ROT)
-    out["S26"] = (mid_r + DX_MIDDLE - 38.0, THUMB_EXTRA_DY, +THUMB_ROT)
-    out["S27"] = (mid_r + DX_MIDDLE - 19.0, THUMB_IN_DY, +THUMB_ROT)
-    out["S28"] = (mid_r + DX_MIDDLE, THUMB_REST_DY, +THUMB_ROT)
+    # Vorzeichen: links +THUMB_ROT, rechts -THUMB_ROT. Beide Kappen kippen
+    # damit zur Mitte hin nach oben, es entsteht ein V (Dachform) zwischen den
+    # Daumen. Massgeblich ist das SVG-/Render-Koordinatensystem (x rechts,
+    # y nach UNTEN, wie die .kicad_pcb-Datei selbst):
+    #   Kappen-Oberkante zeigt nach -y; bei SVG-rotate(a) ist die Normale
+    #   (sin a, -cos a). Links soll sie nach rechts kippen (sin a > 0), rechts
+    #   nach links (sin a < 0) - also links positiv, rechts negativ.
+    # Gegenprobe ueber die Pad-Achse (Pad1->Pad2, Basis bei rot=0 ist 22.78):
+    #   links +9 -> 13.78 Grad, rechts -9 -> 31.78 Grad, also gespiegelt.
+    out["S23"] = (mid_l + DX_MIDDLE, THUMB_REST_DY, +THUMB_ROT)
+    out["S24"] = (mid_l + DX_MIDDLE + 19.0, THUMB_IN_DY, +THUMB_ROT)
+    out["S25"] = (mid_l + DX_MIDDLE + 38.0, THUMB_EXTRA_DY, +THUMB_ROT)
+    out["S26"] = (mid_r + DX_MIDDLE - 38.0, THUMB_EXTRA_DY, -THUMB_ROT)
+    out["S27"] = (mid_r + DX_MIDDLE - 19.0, THUMB_IN_DY, -THUMB_ROT)
+    out["S28"] = (mid_r + DX_MIDDLE, THUMB_REST_DY, -THUMB_ROT)
     return out
 
 
@@ -292,15 +295,19 @@ def main() -> None:
         #    und kollidierte mit dessen NPTH-Loch (0.04 mm Rand). Nach
         #    aussen hat S23 als Randtaste 20 mm Platz.
         # Die Daumentasten bekommen feste Offsets, weil im Cluster die
-        # Nachbarn sonst kollidieren. Reihenfolge jeweils von aussen nach
-        # innen, Diode zeigt zur Cluster-Mitte hin (dort ist Platz):
-        #   links  S23(-60) -> 8.0, S24(-41) -> 10.0, S25(-22) -> 10.0
-        #   rechts S28( 60) -> -8.0, S27(41) -> -10.0, S26(22) -> -10.0
-        # Ohne die expliziten Werte landete D27 bei +10 auf x=51 und D28
-        # bei -8 auf x=52 - 1 mm Abstand, DRC courtyards_overlap.
+        # Nachbarn sonst kollidieren. Alle sechs zeigen mit der Diode zur
+        # Cluster-Mitte (dort ist Platz), also links +x, rechts -x:
+        #   links  S23(-60), S24(-41), S25(-22) -> +10.0
+        #   rechts S28( 60), S27( 41), S26( 22) -> -10.0
+        # Ohne die expliziten Werte landeten D27 und D28 nur 1 mm auseinander
+        # (DRC courtyards_overlap).
+        # Bei der V-Drehung (links +9, rechts -9) zeigt S23/S28 in dieselbe
+        # Richtung wie die uebrigen vier; bei der frueheren A-Drehung mussten
+        # sie gespiegelt werden. Empirisch geprueft: +-8, +-10 und +-12 geben
+        # alle 0 DRC, 10.0 liegt mittig.
         THUMB_DIODE_OX = {
-            "S23": 8.0, "S24": 10.0, "S25": 10.0,
-            "S26": -10.0, "S27": -10.0, "S28": -8.0,
+            "S23": 10.0, "S24": 10.0, "S25": 10.0,
+            "S26": -10.0, "S27": -10.0, "S28": -10.0,
         }
         if sw in THUMB_DIODE_OX:
             ox = THUMB_DIODE_OX[sw]
