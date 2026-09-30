@@ -187,21 +187,22 @@ def target_positions() -> dict[str, tuple[float, float, float]]:
     # gemessene Daumenachse (die waere 125-134 Grad zur Fingerrichtung, also
     # viel mehr): Choc-1u ist 17.5 x 16.5 mm, S23 und S24 liegen 19.36 mm
     # auseinander -> siehe THUMB_ROT oben.
-    # Vorzeichen: links +THUMB_ROT, rechts -THUMB_ROT. Beide Kappen kippen
-    # damit zur Mitte hin nach oben, es entsteht ein V (Dachform) zwischen den
-    # Daumen. Massgeblich ist das SVG-/Render-Koordinatensystem (x rechts,
+    # Vorzeichen: links -THUMB_ROT, rechts +THUMB_ROT. Damit kippt die
+    # Kappen-Oberkante beidseitig von der Mitte weg nach aussen - die Kappen
+    # spreizen wie ein umgekehrtes V (Dach von der Mitte nach aussen
+    # abfallend). Massgeblich ist das SVG-/Render-Koordinatensystem (x rechts,
     # y nach UNTEN, wie die .kicad_pcb-Datei selbst):
     #   Kappen-Oberkante zeigt nach -y; bei SVG-rotate(a) ist die Normale
-    #   (sin a, -cos a). Links soll sie nach rechts kippen (sin a > 0), rechts
-    #   nach links (sin a < 0) - also links positiv, rechts negativ.
+    #   (sin a, -cos a). Links soll sie nach links kippen (sin a < 0), rechts
+    #   nach rechts (sin a > 0) - also links negativ, rechts positiv.
     # Gegenprobe ueber die Pad-Achse (Pad1->Pad2, Basis bei rot=0 ist 22.78):
-    #   links +9 -> 13.78 Grad, rechts -9 -> 31.78 Grad, also gespiegelt.
-    out["S23"] = (mid_l + DX_MIDDLE, THUMB_REST_DY, +THUMB_ROT)
-    out["S24"] = (mid_l + DX_MIDDLE + 19.0, THUMB_IN_DY, +THUMB_ROT)
-    out["S25"] = (mid_l + DX_MIDDLE + 38.0, THUMB_EXTRA_DY, +THUMB_ROT)
-    out["S26"] = (mid_r + DX_MIDDLE - 38.0, THUMB_EXTRA_DY, -THUMB_ROT)
-    out["S27"] = (mid_r + DX_MIDDLE - 19.0, THUMB_IN_DY, -THUMB_ROT)
-    out["S28"] = (mid_r + DX_MIDDLE, THUMB_REST_DY, -THUMB_ROT)
+    #   links -3 -> 25.78 Grad, rechts +3 -> 19.78 Grad, also gespiegelt.
+    out["S23"] = (mid_l + DX_MIDDLE, THUMB_REST_DY, -THUMB_ROT)
+    out["S24"] = (mid_l + DX_MIDDLE + 19.0, THUMB_IN_DY, -THUMB_ROT)
+    out["S25"] = (mid_l + DX_MIDDLE + 38.0, THUMB_EXTRA_DY, -THUMB_ROT)
+    out["S26"] = (mid_r + DX_MIDDLE - 38.0, THUMB_EXTRA_DY, +THUMB_ROT)
+    out["S27"] = (mid_r + DX_MIDDLE - 19.0, THUMB_IN_DY, +THUMB_ROT)
+    out["S28"] = (mid_r + DX_MIDDLE, THUMB_REST_DY, +THUMB_ROT)
     return out
 
 
